@@ -105,7 +105,8 @@ class Route
                 return call_user_func_array($action, array_values($params));
             }
             if (is_array($action)) {
-                return call_user_func_array([new $action[0], $action[1]], array_values($params));
+                $controller = app()->make($action[0]);
+                return call_user_func_array([$controller, $action[1]], array_values($params));
             }
         };
 

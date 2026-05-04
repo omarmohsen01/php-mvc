@@ -45,4 +45,36 @@ class Application
         }
 
     }
+
+    public function make($class)
+    {
+        $bindings = [
+            \App\Repositories\Contracts\UserRepositoryInterface::class => \App\Repositories\UserRepository::class,
+        ];
+
+        if (isset($bindings[$class])) {
+            $class = $bindings[$class];
+        }
+
+        $reflector = new \ReflectionClass($class);
+        $constructor = $reflector->getConstructor();
+
+        if (is_null($constructor)) {
+            return new $class;
+        }
+
+        $parameters = $constructor->getParameters();
+        $dependencies = [];
+
+        foreach ($parameters as $parameter) {
+            $type = $parameter->getType();
+            if ($type && !$type->isBuiltin()) {
+                $dependencies[] = $this->make($type->getName());
+            } else {
+                $dependencies[] = $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+            }
+        }
+
+        return $reflector->newInstanceArgs($dependencies);
+    }
 }
