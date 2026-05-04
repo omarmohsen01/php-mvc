@@ -36,6 +36,20 @@ class Route
         return new static();
     }
 
+    public static function put($route, $action)
+    {
+        self::$routes['PUT'][$route] = ['action' => $action, 'middlewares' => []];
+        self::$lastRoute = ['method' => 'PUT', 'path' => $route];
+        return new static();
+    }
+
+    public static function delete($route, $action)
+    {
+        self::$routes['DELETE'][$route] = ['action' => $action, 'middlewares' => []];
+        self::$lastRoute = ['method' => 'DELETE', 'path' => $route];
+        return new static();
+    }
+
     public function middleware($middleware)
     {
         $method = self::$lastRoute['method'];
@@ -57,7 +71,26 @@ class Route
     {
         $path = $this->request->path();
         $method = $this->request->method();
-        $routeData = self::$routes[$method][$path] ?? false;
+        $routes = self::$routes[$method] ?? [];
+        
+        $routeData = false;
+        $params = [];
+
+        foreach ($routes as $routePath => $data) {
+            $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<\1>[a-zA-Z0-9_-]+)', $routePath);
+            $pattern = preg_replace('/:([a-zA-Z0-9_]+)/', '(?P<\1>[a-zA-Z0-9_-]+)', $pattern);
+            $pattern = "#^" . $pattern . "$#";
+
+            if (preg_match($pattern, $path, $matches)) {
+                $routeData = $data;
+                foreach ($matches as $key => $value) {
+                    if (is_string($key)) {
+                        $params[$key] = $value;
+                    }
+                }
+                break;
+            }
+        }
         
         if ($routeData === false) {
             View::makeError('404');
@@ -67,12 +100,12 @@ class Route
         $action = $routeData['action'];
         $middlewares = $routeData['middlewares'] ?? [];
 
-        $actionFn = function() use ($action) {
+        $actionFn = function() use ($action, $params) {
             if (is_callable($action)) {
-                return call_user_func_array($action, []);
+                return call_user_func_array($action, array_values($params));
             }
             if (is_array($action)) {
-                return call_user_func_array([new $action[0], $action[1]], []);
+                return call_user_func_array([new $action[0], $action[1]], array_values($params));
             }
         };
 

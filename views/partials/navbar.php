@@ -1,9 +1,14 @@
 <nav class="navbar" role="navigation" aria-label="main navigation">
   <div id="navbarBasicExample" class="navbar-menu">
     <div class="navbar-start">
-      <a class="navbar-item" href="/">
+      <a class="navbar-item" href="<?= url('/') ?>">
         Home
       </a>
+      <?php if (!empty($_SESSION['user_id'])): ?>
+      <a class="navbar-item" href="<?= url('/users') ?>">
+        Users
+      </a>
+      <?php endif; ?>
 
       <a class="navbar-item">
         Documentation
