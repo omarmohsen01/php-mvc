@@ -35,12 +35,20 @@
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
-          <a class="button is-primary" href="/signup">
-            <strong>Sign up</strong>
-          </a>
-          <a class="button is-light" href="/login">
-            Log in
-          </a>
+          <?php if (empty($_SESSION['user_id'])): ?>
+              <a class="button is-primary" href="<?= url('/register') ?>">
+                <strong>Register</strong>
+              </a>
+              <a class="button is-light" href="<?= url('/login') ?>">
+                Log in
+              </a>
+          <?php else: ?>
+              <form action="<?= url('/logout') ?>" method="POST">
+                  <button type="submit" class="button is-danger">
+                    Log out
+                  </button>
+              </form>
+          <?php endif; ?>
         </div>
       </div>
     </div>
